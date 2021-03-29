@@ -2,8 +2,6 @@ import sqlite3
 from dateutil.parser import parse
 from Model.DueDate import DueDate
 from Model.Context import Context
-import os
-from Config import Config
 
 
 class Data:
@@ -79,6 +77,7 @@ class Data:
             FROM assignment_due 
                 WHERE guild_id="{context.guild.id}" 
                 AND subject_name="{subjectName}"  
+                ORDER BY due_date
         """)
         for dueDate in dueDates:
             temp.append(DueDate(dueDate[0], dueDate[1], dueDate[2], dueDate[3], dueDate[4], dueDate[5], dueDate[6]))
@@ -91,6 +90,7 @@ class Data:
             FROM assignment_due 
                 WHERE guild_id="{context.guild.id}" 
                 AND id="{id}"  
+                ORDER BY due_date
         """)
         for dueDate in dueDates:
             temp.append(DueDate(dueDate[0], dueDate[1], dueDate[2], dueDate[3], dueDate[4], dueDate[5], dueDate[6]))
@@ -103,6 +103,7 @@ class Data:
                FROM assignment_due 
                    WHERE guild_id="{context.guild.id}" 
                    AND deleted_at=""
+                   ORDER BY due_date
            """)
         for dueDate in dueDates:
             temp.append(DueDate(dueDate[0], dueDate[1], dueDate[2], dueDate[3], dueDate[4], dueDate[5], dueDate[6]))
