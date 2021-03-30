@@ -113,6 +113,7 @@ class Data:
         self.conn.execute(f"""
         UPDATE assignment_due 
             SET deleted_at = CURRENT_TIMESTAMP, deleted_by = "{context.author}" 
+            WHERE guild_id="{context.guild.id}" AND
             WHERE id="{dueDateId}"
         """)
         self.conn.commit()
