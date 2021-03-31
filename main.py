@@ -6,7 +6,7 @@ from dateutil.parser import parse
 from Helper import Helper
 from datetime import datetime
 
-bot = commands.Bot(command_prefix='!ass ')
+bot = commands.Bot(command_prefix=Config().COMMAND_PREFIX)
 
 
 @bot.event
@@ -31,8 +31,8 @@ async def add(context: Context, subjectName: str = "", due_date: str = "", event
                 "🤢🤢 Hey you did not pass enough argument!\n"
                 "!ass add subject_name due_date event_name (optional)"
             ))
-        due = parse(due_date)
-        if datetime.strptime(str(due).split(' ')[0], "%Y-%m-%d").date() < datetime.now().date():
+        due = datetime.strptime(str(parse(due_date)).split(' ')[0], "%Y-%m-%d")
+        if due.date() < datetime.now().date():
             return await context.send(Helper.talkLikeABot(
                 "Hmm... i dont quite get what is the date ... \n"
                 "Either you enter wrong date format [Use this (2021-03-29)] \n"
@@ -40,11 +40,12 @@ async def add(context: Context, subjectName: str = "", due_date: str = "", event
             ))
 
         Data().add(context, subjectName, due_date, eventName)
+
         event = "[" + eventName + "]" if eventName != "" else ""
-        await context.send(Helper.talkLikeABot(f"Due date for Subject:{subjectName}{event} on {due} has been added"))
+        return await context.send(Helper.talkLikeABot(f"Due date for Subject:{subjectName}{event} on "
+                                                      f"{str(due).split(' ')[0]} has been added"))
     except Exception as e:
-        await context.send(e)
-        print(e)
+        return await context.send(e)
 
 
 @bot.command('all')
@@ -55,10 +56,9 @@ async def showAll(context: Context):
         if len(dueDates) == 0:
             return await context.send(Helper.talkLikeABot(f"There is no due date setup yet"))
 
-        await context.send(Helper.talkDueDateAsBot(dueDates))
+        return await context.send(Helper.talkDueDateAsBot(dueDates))
     except Exception as e:
-        await context.send(e)
-        print(e)
+        return await context.send(e)
 
 
 @bot.command('find')
@@ -69,49 +69,61 @@ async def find(context: Context, subjectName: str):
         if len(dueDates) == 0:
             return await context.send(Helper.talkLikeABot(f"There is no due date name as : {subjectName}"))
 
-        await context.send(Helper.talkDueDateAsBot(dueDates))
+        return await context.send(Helper.talkDueDateAsBot(dueDates))
 
     except Exception as e:
-        await context.send(e)
+        return await context.send(e)
 
 
 @bot.command('id')
-async def find(context: Context, id: str):
+async def findID(context: Context, id: str):
     """Find Due date         !ass find subject_name """
     try:
         dueDates = Data().findById(context, id)
         if len(dueDates) == 0:
-            return await context.send(Helper.talkLikeABot(f"There is no due date name as : {id}"))
+            return await context.send(Helper.talkLikeABot(f"There is no due date id as : {id}"))
 
-        await context.send(Helper.talkDueDateAsBot(dueDates))
+        return await context.send(Helper.talkDueDateAsBot(dueDates))
 
     except Exception as e:
-        await context.send(e)
+        return await context.send(e)
 
 
 @bot.command('change')
-async def hole(context: Context, subjectID: str, subjectName: str = "", dueDate: str = "", eventName: str = ""):
+async def change(context: Context, subjectID: str, subjectName: str = "", dueDate: str = "", eventName: str = ""):
     """Change Due Date Info  !ass change id subject_name due_date event_name"""
     try:
         dueDates = Data().findById(context, subjectID)
         if len(dueDates) == 0:
             return await context.send(Helper.talkLikeABot(f"There is no due date with id : {subjectID}"))
-        Data().change(subjectID, subjectName, dueDate, eventName)
 
-        await context.send(Helper.talkDueDateAsBot(f"Beep Bop ! Subject with id : '{subjectID}' has been deleted "))
+        check = dueDates[0]
+
+        if check.module_name == subjectName and check.due_date == parse(dueDate).date() and check.title == eventName:
+            return await context.send(Helper.talkLikeABot("Are you try to change it to same content !? NO"))
+
+        db = Data().change(context, subjectID, subjectName, dueDate, eventName)
+
+        if db.cursor.rowcount <= 0:
+            return await context.send("Problem Occur")
+
+        return await context.send(Helper.talkLikeABot(f"Beep Bop ! Due Date with id : '{subjectID}' has been change "))
 
     except Exception as e:
-        await context.send(e)
+        return await context.send(e)
 
 
 @bot.command('hole')
-async def hole(context: Context, subjectID: str):
+async def hole(context: Context, subjectID):
     """Delete Due Date       !ass hole subject_id """
     try:
+        if len(Data().findById(context, subjectID)) <= 0:
+            return await context.send(Helper.talkLikeABot(f"There is no due date with id : {subjectID}"))
+
         Data().markAsDelete(context, subjectID)
-        await context.send(Helper.talkDueDateAsBot(f"Beep Bop ! Subject with id : '{subjectID}' has been deleted "))
+        return await context.send(Helper.talkLikeABot(f"Beep Bop ! Due Date with id : '{subjectID}' has been deleted "))
     except Exception as e:
-        await context.send(e)
+        return await context.send(e)
 
 
 if __name__ == "__main__":
