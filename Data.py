@@ -163,7 +163,7 @@ class Data:
         sql = "SELECT id, subject_name, title, due_date, guild_id, channel_id, created_by, deleted_at " \
               "FROM assignment_due WHERE guild_id=%s AND deleted_at IS NULL"
         val = (context.guild.id)
-        self.cursor.execute()
+        self.cursor.execute(sql, val)
 
         if self.cursor.rowcount <= 0:
             return temp
