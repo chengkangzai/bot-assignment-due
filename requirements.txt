@@ -14,3 +14,6 @@ python-dotenv==0.16.0
 six==1.15.0
 typing-extensions==3.7.4.3
 yarl==1.6.3
+
+pip~=21.0.1
+setuptools~=54.2.0
