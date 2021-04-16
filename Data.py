@@ -18,7 +18,8 @@ class Data:
         self.cursor = self.con.cursor(buffered=True)
         print("Opened database successfully")
 
-    def __setUpTable(self):
+    def setUpTable(self):
+        print("Creating Table")
         self.cursor.execute('''
         CREATE TABLE IF NOT EXISTS assignment_due(
             id                  INT                     PRIMARY KEY AUTO_INCREMENT ,
@@ -33,13 +34,21 @@ class Data:
             deleted_at          TIMESTAMP               DEFAULT NULL
             );
         ''')
-
+        self.con.commit()
+        print("Table created successfully")
         return self
 
     def __seedTestData(self):
         subjectName = "MAR"
         eventName = "TEST TEST"
         due = parse("2021-01-01")
+
+        print(f"""Seeding Data due date of 
+subjectName ={subjectName}
+eventName   ={eventName}
+due         ={due}   
+        """)
+
         self.cursor.execute(f"""
                     INSERT INTO assignment_due(subject_name,title,due_date,guild_id,channel_id,created_by) VALUES 
                                 ("{subjectName}","{eventName}", "{due}","123","123","ppl")
@@ -47,6 +56,8 @@ class Data:
         self.con.commit()
         if self.cursor.rowcount <= 0:
             raise Exception("There is no row effected")
+
+        print("TEST 1 Seed Data to table :: PASSED")
         return self
 
     def __readTestData(self):
@@ -58,12 +69,9 @@ class Data:
             raise Exception("No Record")
 
         dueDates = self.cursor.fetchall()
-        print(dueDates)
-        # for row in dueDates:
-        #     print("ID" + str(row[0]))
-        #     print("module_name" + row[2])
-        #     print("title" + row[3])
-        #     print("due_date" + row[4])
+        for dueDate in dueDates:
+            print(dueDate)
+        print("TEST 2 Seed Data to table :: PASSED")
         return self
 
     def __readSingle(self):
@@ -88,12 +96,18 @@ class Data:
         subjectName = "MAR"
         eventName = "AFTER UPDATE TEST TEST"
         due = parse("2021-01-01")
+        print(f"""Seeding Data due date of 
+subjectName ={subjectName}
+eventName   ={eventName}
+due         ={due}   
+                """)
         self.cursor.execute(f"""
             UPDATE assignment_due
                 SET subject_name="{subjectName}",title ="{eventName}",due_date ="{due}"
                 WHERE id = "1"
                """)
         self.con.commit()
+        print("TEST 3 Update Seed Data to table :: PASSED")
         return self
 
     def __del__(self):
@@ -101,18 +115,16 @@ class Data:
         self.con.close()
 
     def test(self):
-        # self.__setUpTable() \
-        #     .__seedTestData() \
-        #     .__readTestData() \
-        #     .__updateSeedData() \
-        self.__readTestData()
+        self.__seedTestData() \
+            .__readTestData() \
+            .__updateSeedData() \
+            .__readTestData()
 
     def add(self, context: Context, subjectName: str, due_date: str, eventName: str = "", ):
         due = parse(due_date)
         sql = "INSERT INTO assignment_due(subject_name,title,due_date,guild_id,channel_id,created_by) " \
-              "VALUES  (%s %s,%s,%s,%s,%s)"
+              "VALUES  (%s,%s,%s,%s,%s,%s)"
         val = (subjectName, eventName, due, context.guild.id, context.channel.id, context.author.name)
-
         self.cursor.execute(sql, val)
         self.con.commit()
 
@@ -161,8 +173,8 @@ class Data:
     def getAll(self, context: Context) -> [DueDate]:
         temp = []
         sql = "SELECT id, subject_name, title, due_date, guild_id, channel_id, created_by, deleted_at " \
-              "FROM assignment_due WHERE guild_id=%s AND deleted_at IS NULL"
-        val = (context.guild.id)
+              "FROM assignment_due WHERE guild_id= %s  AND deleted_at IS NULL"
+        val = context.guild.id
         self.cursor.execute(sql, val)
 
         if self.cursor.rowcount <= 0:
@@ -175,7 +187,7 @@ class Data:
 
     def markAsDelete(self, context: Context, dueDateId: str):
         sql = "UPDATE assignment_due  SET deleted_at = CURRENT_TIMESTAMP, deleted_by=%s " \
-              "WHERE guild_id=%s AND id=%sAND deleted_at IS NULL "
+              "WHERE guild_id=%s AND id=%s AND deleted_at IS NULL "
         val = (context.author.name, context.guild.id, dueDateId)
         self.cursor.execute(sql, val)
         self.con.commit()
@@ -186,4 +198,20 @@ class Data:
 
 
 if __name__ == "__main__":
-    Data().test()
+    print("1. Initial Setup")
+    print("2. Do test on DB")
+    print("3. Get DB Detail")
+    operation = input("What do you want !?")
+    if operation == "1":
+        Data().setUpTable()
+    elif operation == "2":
+        Data().test()
+    elif operation == "3":
+        print(f"""Operating under 
+DB_HOST     = {Config().DB_HOST}
+DB_USERNAME = {Config().DB_USERNAME}
+DB_PASSWORD = {Config().DB_PASSWORD}
+DB_DATABASE = {Config().DB_DATABASE}
+       """)
+    else:
+        exit(print("Invalid Input"))
