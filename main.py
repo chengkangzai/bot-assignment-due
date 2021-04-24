@@ -139,7 +139,7 @@ async def hole(context: Context, subjectID):
 @bot.command('about')
 async def about(context: Context):
     """Show Info of this bot :3 """
-    version = '1.0.0'
+    version = '1.0.1'
     await context.send(f"""
     Assignment Due Date Bot v{version}
 Hi there ! This project is created by chengkangzai (https://github.com/chengkangzai)
