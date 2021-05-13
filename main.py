@@ -153,7 +153,7 @@ async def notEnoughArgs(context: Context):
         f"""
 Hey you did not pass enough argument! 🤢🤢
 Wanna get some help ? 
-Type : '{commandPrefix} help' """
+Type : '{commandPrefix}help' """
     ))
 
 
