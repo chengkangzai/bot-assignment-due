@@ -6,7 +6,7 @@ from Config import Config
 import mysql.connector
 
 
-class Data:
+class DueDateData:
 
     def __init__(self):
         self.con = mysql.connector.connect(
@@ -202,9 +202,9 @@ if __name__ == "__main__":
     print("3. Get DB Detail")
     operation = input("What do you want !?")
     if operation == "1":
-        Data().setUpTable()
+        DueDateData().setUpTable()
     elif operation == "2":
-        Data().test()
+        DueDateData().test()
     elif operation == "3":
         print(f"""Operating under 
 DB_HOST     = {Config().DB_HOST}
