@@ -6,7 +6,8 @@ from dateutil.parser import parse
 from Helper import Helper
 from datetime import datetime
 
-bot = commands.Bot(command_prefix=Config().COMMAND_PREFIX + " ")
+commandPrefix = Config().COMMAND_PREFIX + " "
+bot = commands.Bot(commandPrefix)
 
 
 @bot.event
@@ -27,7 +28,7 @@ async def on_ready():
 async def add(context: Context, subjectName: str = "", due_date: str = "", eventName: str = ""):
     """Add Due date          !ass add subject_name due_date event_name(opt)"""
     if not subjectName or not due_date:
-        return notEnoughArgs(context)
+        return await notEnoughArgs(context)
 
     try:
         due = datetime.strptime(str(parse(due_date)).split(' ')[0], "%Y-%m-%d")
@@ -61,10 +62,10 @@ async def showAll(context: Context):
 
 
 @bot.command('find')
-async def find(context: Context, subjectName: str):
+async def find(context: Context, subjectName: str = ""):
     """Find Due date         !ass find subject_name """
     if not subjectName:
-        return notEnoughArgs(context)
+        return await notEnoughArgs(context)
 
     try:
         dueDates = Data().findBySubjectName(context, subjectName)
@@ -78,10 +79,10 @@ async def find(context: Context, subjectName: str):
 
 
 @bot.command('id')
-async def findID(context: Context, dueDateID: str):
+async def findID(context: Context, dueDateID: str = ""):
     """Find Due date         !ass find subject_name """
     if not dueDateID:
-        return notEnoughArgs(context)
+        return await notEnoughArgs(context)
 
     try:
         dueDates = Data().findById(context, dueDateID)
@@ -95,10 +96,10 @@ async def findID(context: Context, dueDateID: str):
 
 
 @bot.command('change')
-async def change(context: Context, subjectID: str, subjectName: str = "", dueDate: str = "", eventName: str = ""):
+async def change(context: Context, subjectID: str = "", subjectName: str = "", dueDate: str = "", eventName: str = ""):
     """Change Due Date Info  !ass change id subject_name due_date event_name"""
-    if not subjectID:
-        return notEnoughArgs(context)
+    if not subjectID or not subjectName or not dueDate:
+        return await notEnoughArgs(context)
 
     try:
         dueDates = Data().findById(context, subjectID)
@@ -121,10 +122,10 @@ async def change(context: Context, subjectID: str, subjectName: str = "", dueDat
 
 
 @bot.command('hole')
-async def hole(context: Context, subjectID):
+async def hole(context: Context, subjectID=""):
     """Delete Due Date       !ass hole subject_id """
     if not subjectID:
-        return notEnoughArgs(context)
+        return await notEnoughArgs(context)
 
     try:
         if len(Data().findById(context, subjectID)) <= 0:
@@ -139,7 +140,7 @@ async def hole(context: Context, subjectID):
 @bot.command('about')
 async def about(context: Context):
     """Show Info of this bot :3 """
-    version = '1.0.1'
+    version = '1.0.2'
     await context.send(f"""
     Assignment Due Date Bot v{version}
 Hi there ! This project is created by chengkangzai (https://github.com/chengkangzai)
@@ -149,8 +150,10 @@ Any bug report can create a issue at here https://tinyurl.com/assbotIssues
 
 async def notEnoughArgs(context: Context):
     return await context.send(Helper.talkLikeABot(
-        "🤢🤢 Hey you did not pass enough argument!\n"
-        "!ass add subject_name due_date event_name (optional)"
+        f"""
+Hey you did not pass enough argument! 🤢🤢
+Wanna get some help ? 
+Type : '{commandPrefix} help' """
     ))
 
 
