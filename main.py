@@ -1,4 +1,5 @@
-from Data import Data
+from DueDateData import DueDateData
+from AngryData import AngryData
 from Config import Config
 from discord.ext import commands
 from Model.Context import Context
@@ -39,11 +40,17 @@ async def add(context: Context, subjectName: str = "", due_date: str = "", event
                 "Or you enter a date that is already pass "
             ))
 
-        Data().add(context, subjectName, due_date, eventName)
+        DueDateData().add(context, subjectName, due_date, eventName)
 
         event = "[" + eventName + "]" if eventName != "" else ""
-        return await context.send(Helper.talkLikeABot(f"Due date for Subject:{subjectName}{event} on "
-                                                      f"{str(due).split(' ')[0]} has been added"))
+
+        isAngry = AngryData().isGuildAngry(context)
+        if isAngry:
+            return await context.send(Helper.talkLikeABot(f"Due Date fot this FUKING SUBJECT {subjectName}{event} on"
+                                                          f"{str(due).split(' ')[0]} has been added"))
+        else:
+            return await context.send(Helper.talkLikeABot(f"Due date for Subject:{subjectName}{event} on "
+                                                          f"{str(due).split(' ')[0]} has been added"))
     except Exception as e:
         return await context.send(e)
 
@@ -52,7 +59,7 @@ async def add(context: Context, subjectName: str = "", due_date: str = "", event
 async def showAll(context: Context):
     """Find All Due date     !ass show all """
     try:
-        dueDates = Data().getAll(context)
+        dueDates = DueDateData().getAll(context)
         if len(dueDates) == 0:
             return await context.send(Helper.talkLikeABot(f"There is no due date setup yet"))
 
@@ -68,7 +75,7 @@ async def find(context: Context, subjectName: str = ""):
         return await notEnoughArgs(context)
 
     try:
-        dueDates = Data().findBySubjectName(context, subjectName)
+        dueDates = DueDateData().findBySubjectName(context, subjectName)
         if len(dueDates) == 0:
             return await context.send(Helper.talkLikeABot(f"There is no due date name as : {subjectName}"))
 
@@ -85,7 +92,7 @@ async def findID(context: Context, dueDateID: str = ""):
         return await notEnoughArgs(context)
 
     try:
-        dueDates = Data().findById(context, dueDateID)
+        dueDates = DueDateData().findById(context, dueDateID)
         if len(dueDates) == 0:
             return await context.send(Helper.talkLikeABot(f"There is no due date id as : {dueDateID}"))
 
@@ -102,7 +109,8 @@ async def change(context: Context, subjectID: str = "", subjectName: str = "", d
         return await notEnoughArgs(context)
 
     try:
-        dueDates = Data().findById(context, subjectID)
+        dueDateData = DueDateData()
+        dueDates = dueDateData.findById(context, subjectID)
         if len(dueDates) == 0:
             return await context.send(Helper.talkLikeABot(f"There is no due date with id : {subjectID}"))
 
@@ -110,12 +118,18 @@ async def change(context: Context, subjectID: str = "", subjectName: str = "", d
         if check.module_name == subjectName and check.due_date == parse(dueDate).date() and check.title == eventName:
             return await context.send(Helper.talkLikeABot("Are you try to change it to same content !? NO"))
 
-        db = Data().change(context, subjectID, subjectName, dueDate, eventName)
+        db = dueDateData.change(context, subjectID, subjectName, dueDate, eventName)
 
         if db.cursor.rowcount <= 0:
             return await context.send("Problem Occur")
 
-        return await context.send(Helper.talkLikeABot(f"Beep Bop ! Due Date with id : '{subjectID}' has been change "))
+        isAngry = AngryData().isGuildAngry(context)
+        if isAngry:
+            return await context.send(
+                Helper.talkLikeABot(f"Due Date for this FUCKING Subject:{subjectName}{eventName} has been change "))
+        else:
+            return await context.send(
+                Helper.talkLikeABot(f"Beep Bop ! Due Date with id : Subject:{subjectName}{eventName} has been change "))
 
     except Exception as e:
         return await context.send(e)
@@ -128,11 +142,23 @@ async def hole(context: Context, subjectID=""):
         return await notEnoughArgs(context)
 
     try:
-        if len(Data().findById(context, subjectID)) <= 0:
+        dueDateData = DueDateData()
+        dueDate = dueDateData.findById(context, subjectID)
+        if len(dueDate) <= 0:
             return await context.send(Helper.talkLikeABot(f"There is no due date with id : {subjectID}"))
 
-        Data().markAsDelete(context, subjectID)
-        return await context.send(Helper.talkLikeABot(f"Beep Bop ! Due Date with id : '{subjectID}' has been deleted "))
+        dueDateData.markAsDelete(context, subjectID)
+
+        subjectName = dueDate[0].module_name
+        event = dueDate[0].title
+
+        isAngry = AngryData().isGuildAngry(context)
+        if isAngry:
+            return await context.send(
+                Helper.talkLikeABot(f"FUCK YOU [{subjectID}] {subjectName}{event} ! SUCH A ASSHOLE"))
+        else:
+            return await context.send(
+                Helper.talkLikeABot(f"Beep Bop ! Due Date with id : Subject:{subjectName}{event} has been deleted "))
     except Exception as e:
         return await context.send(e)
 
@@ -140,12 +166,29 @@ async def hole(context: Context, subjectID=""):
 @bot.command('about')
 async def about(context: Context):
     """Show Info of this bot :3 """
-    version = '1.0.2'
+    version = '1.0.3'
     await context.send(f"""
     Assignment Due Date Bot v{version}
 Hi there ! This project is created by chengkangzai (https://github.com/chengkangzai)
 Any bug report can create a issue at here https://tinyurl.com/assbotIssues
     """)
+
+
+@bot.command('angry')
+async def about(context: Context):
+    """Turn on/off angry mode  """
+    try:
+        data = AngryData()
+        isAngry = data.isGuildAngry(context)
+        if isAngry:
+            data.setNotAngry(context)
+            return await context.send("This server is CHILL right now")
+        else:
+            data.setAngry(context)
+            return await context.send("This server is FUCKING ANGRY right now")
+
+    except Exception as e:
+        return await context.send(e)
 
 
 async def notEnoughArgs(context: Context):
